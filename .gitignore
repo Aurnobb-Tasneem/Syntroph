@@ -1,5 +1,28 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+venv/
+env/
+ENV/
+.venv
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/media/
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Dependencies
 node_modules
 .pnp
@@ -11,6 +34,7 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
 
 # Testing
 coverage
@@ -36,6 +60,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # Logs
 logs
@@ -176,4 +201,10 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
-.vscode
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
