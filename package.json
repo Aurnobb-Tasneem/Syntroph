@@ -1,12 +1,23 @@
 {
-  "name": "Syntroph",
+  "name": "syntroph",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:api": "cd apps/api && python manage.py runserver",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "format": "prettier --write \"**/*.{ts,tsx,md}\" && biome format --write \"**/*.{ts,tsx,json}\"",
+    "check-types": "turbo run check-types",
+    "test": "turbo run test",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "api:migrate": "docker-compose exec api python manage.py migrate",
+    "api:makemigrations": "docker-compose exec api python manage.py makemigrations",
+    "api:shell": "docker-compose exec api python manage.py shell",
+    "api:createsuperuser": "docker-compose exec api python manage.py createsuperuser"
   },
   "devDependencies": {
     "prettier": "^3.6.2",

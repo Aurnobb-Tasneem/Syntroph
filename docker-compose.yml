@@ -1,0 +1,133 @@
+# Docker Compose configuration for Syntroph CRM
+# This orchestrates all services: Django API, Next.js Web, PostgreSQL, Redis
+# Future additions: MCP Server, Mobile API Gateway
+
+version: '3.9'
+
+services:
+  # PostgreSQL Database - Primary data store
+  # TODO: Add backup volumes and replication for production
+  postgres:
+    image: postgres:16-alpine
+    container_name: syntroph-postgres
+    environment:
+      POSTGRES_DB: syntroph_crm
+      POSTGRES_USER: syntroph_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_change_in_prod}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./apps/api/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - syntroph-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U syntroph_user -d syntroph_crm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - Caching and session management
+  # Future use: Task queue with Celery, WebSocket pub/sub
+  redis:
+    image: redis:7-alpine
+    container_name: syntroph-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - syntroph-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Django API Backend
+  # Handles business logic, integrations (LinkedIn, VOIP, Email, Slack)
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+      target: development
+    container_name: syntroph-api
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      - DEBUG=${DEBUG:-True}
+      - DATABASE_URL=postgresql://syntroph_user:${POSTGRES_PASSWORD:-dev_password_change_in_prod}@postgres:5432/syntroph_crm
+      - REDIS_URL=redis://redis:6379/0
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-dev-key-change-me}
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://web:3000
+      # Future integration placeholders
+      - LINKEDIN_CLIENT_ID=${LINKEDIN_CLIENT_ID:-}
+      - LINKEDIN_CLIENT_SECRET=${LINKEDIN_CLIENT_SECRET:-}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:-}
+      - VOIP_API_KEY=${VOIP_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/app
+      - api_static:/app/staticfiles
+      - api_media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - syntroph-network
+    restart: unless-stopped
+
+  # Next.js Web Frontend
+  # Customer-facing CRM interface with oRPC integration
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: development
+    container_name: syntroph-web
+    command: pnpm dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_TELEMETRY_DISABLED=1
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    networks:
+      - syntroph-network
+    restart: unless-stopped
+
+  # MCP Server (Placeholder - to be implemented)
+  # Model Context Protocol server for AI-powered CRM features
+  # TODO: Add MCP server implementation
+  # mcp-server:
+  #   build:
+  #     context: ./apps/mcp-server
+  #     dockerfile: Dockerfile
+  #   container_name: syntroph-mcp
+  #   ports:
+  #     - "8001:8001"
+  #   networks:
+  #     - syntroph-network
+
+networks:
+  syntroph-network:
+    driver: bridge
+    # Open for collaboration: Consider overlay network for multi-host deployment
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  api_static:
+    driver: local
+  api_media:
+    driver: local
