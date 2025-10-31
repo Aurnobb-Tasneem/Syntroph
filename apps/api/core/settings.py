@@ -46,16 +46,20 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     
-    # Internal apps (to be created)
-    # 'crm.contacts',
-    # 'crm.companies',
-    # 'crm.deals',
-    # 'crm.activities',
+    # Internal apps
+    'core.apps.CoreConfig',  # Our core app (User, Tenant, TenantMembership models)
+    'crm.apps.CrmConfig',    # CRM app (Contact, Organization, Deal, etc.)
+    
+    # Integration apps (to be created)
     # 'integrations.linkedin',
     # 'integrations.slack',
     # 'integrations.voip',
     # 'integrations.email',
 ]
+
+# Tell Django to use our custom User model instead of the default one
+# This MUST be set before running any migrations
+AUTH_USER_MODEL = 'core.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -66,6 +70,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    
+    # Multi-tenant middleware (MUST be after AuthenticationMiddleware)
+    'core.middleware.TenantRoutingMiddleware',
+    'core.middleware.TenantPermissionMiddleware',
+    
+    # Development only - shows tenant info in response headers
+    'core.middleware.TenantDebugMiddleware',
 ]
 
 ROOT_URLCONF = "core.urls"

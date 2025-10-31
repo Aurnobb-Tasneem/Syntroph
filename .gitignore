@@ -208,3 +208,6 @@ vite.config.ts.timestamp-*
 *.swp
 *.swo
 *~
+
+# Progress tracking (personal notes)
+PROGRESS.md
