@@ -103,4 +103,103 @@ docker-compose logs [service-name]
 
 ---
 
+## ⚠️ IMPORTANT: Data Persistence
+
+### ✅ YOUR DATA IS SAFE!
+
+**Question**: Does my data vanish when Docker is stopped or crashed?
+
+**Answer**: **NO!** Your data is stored in **Docker Volumes** which persist on your hard drive.
+
+### How It Works
+
+Your `docker-compose.yml` defines persistent volumes:
+
+```yaml
+volumes:
+  postgres-data:  # PostgreSQL data persists here
+  redis-data:     # Redis data persists here
+```
+
+### Safe Operations (Data is Preserved)
+
+✅ **These commands keep your data:**
+```bash
+docker-compose down              # Stops containers, KEEPS data
+docker-compose stop              # Stops containers, KEEPS data
+docker stop syntroph-postgres    # Stops container, KEEPS data
+```
+
+✅ **These events keep your data:**
+- Shutting down your PC
+- Docker Desktop crash
+- Windows restart
+- Container crashes
+
+### Dangerous Operations (Data Loss)
+
+❌ **Only these will DELETE your data:**
+```bash
+docker-compose down -v           # The -v flag DELETES volumes
+docker volume rm syntroph_postgres-data  # Explicit deletion
+```
+
+### Where Is Your Data Stored?
+
+**Windows Location**:
+```
+C:\ProgramData\Docker\volumes\
+├── syntroph_postgres-data\_data\  ← Your database is here
+└── syntroph_redis-data\_data\     ← Your Redis data is here
+```
+
+This data persists even when:
+- Docker is stopped
+- Containers are removed
+- Your PC is shut down
+
+### Verifying Data After Restart
+
+```bash
+# Start Docker services
+docker-compose up -d postgres redis
+
+# Check your data is still there
+cd apps/api
+python check_postgres_db.py
+```
+
+You'll see all your:
+- ✅ Tenants
+- ✅ Users
+- ✅ Contacts, Organizations, Deals
+- ✅ Database schemas
+
+### Backup Strategy (Recommended)
+
+Even though volumes persist, regular backups are good practice:
+
+```bash
+# Create PostgreSQL backup
+docker exec syntroph-postgres pg_dump -U syntroph_user syntroph_crm > backup_$(date +%Y%m%d).sql
+
+# Restore from backup
+docker exec -i syntroph-postgres psql -U syntroph_user syntroph_crm < backup_20251101.sql
+```
+
+### Summary
+
+| Action | Data Status |
+|--------|-------------|
+| `docker-compose down` | ✅ **SAFE** - Data preserved |
+| `docker-compose stop` | ✅ **SAFE** - Data preserved |
+| Shutdown PC | ✅ **SAFE** - Data preserved |
+| Docker crash | ✅ **SAFE** - Data preserved |
+| `docker-compose down -v` | ❌ **DANGER** - Data deleted |
+| Delete volume manually | ❌ **DANGER** - Data deleted |
+
+**Your data is safe unless you explicitly delete volumes with `-v` flag!**
+
+---
+
 **Need help?** Open an issue on GitHub.
