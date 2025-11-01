@@ -59,7 +59,8 @@ INSTALLED_APPS = [
 
 # Tell Django to use our custom User model instead of the default one
 # This MUST be set before running any migrations
-AUTH_USER_MODEL = 'core.User'
+# User model now lives in CRM app (tenant schema), not core app (public schema)
+AUTH_USER_MODEL = 'crm.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -111,6 +112,9 @@ DATABASE_URL = config(
 DATABASES = {
     'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
 }
+
+# Database Router - Controls which models go to which schemas
+DATABASE_ROUTERS = ['core.db_router.TenantDatabaseRouter']
 
 
 # Password validation
