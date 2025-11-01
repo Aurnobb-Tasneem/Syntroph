@@ -23,6 +23,10 @@ db.sqlite3-journal
 .coverage
 htmlcov/
 
+# Test and utility scripts (not for version control)
+apps/api/scripts/
+apps/api/backup/
+
 # Dependencies
 node_modules
 .pnp
